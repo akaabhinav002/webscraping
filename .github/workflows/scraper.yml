@@ -1,0 +1,30 @@
+name: Run Scraper
+on:
+  schedule:
+    - cron: "0 0 * * *"  # Runs daily at midnight (UTC)
+  workflow_dispatch:  # Allows manual execution
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install playwright pandas openpyxl
+          playwright install
+
+      - name: Run Scraper
+        run: python scraper.py "Dublin" 10
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Scraped Data
+          path: output/
