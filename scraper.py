@@ -5,7 +5,7 @@ import pandas as pd
 import os
 import re
 
-os.system("playwright install --with-deps")
+os.system("playwright install")
 
 @dataclass
 class Studio:
