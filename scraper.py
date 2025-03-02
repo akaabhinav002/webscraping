@@ -139,12 +139,17 @@ def main(location, total_results):
         context = browser.new_context()
         page = context.new_page()
 
-        page.goto("https://www.google.com/maps", timeout=60000)
-        page.wait_for_timeout(5000)
+        page.goto("https://www.google.com/maps", timeout=120000)  # Increased timeout
+        page.wait_for_load_state("networkidle", timeout=120000)  # Wait for network to be idle
+        print("Page loaded successfully")
 
         page.locator('//input[@id="searchboxinput"]').fill(search_query)
         page.keyboard.press("Enter")
-        page.wait_for_timeout(5000)
+        page.wait_for_timeout(15000)  # Increased timeout
+
+        # Wait for results to load
+        page.wait_for_selector("//div[contains(@aria-label, 'Results for')]", timeout=120000)  # Increased timeout
+        print("Results loaded successfully")
 
         results_panel = page.locator("xpath=//div[contains(@aria-label, 'Results for')]")
 
@@ -160,13 +165,13 @@ def main(location, total_results):
                 if processed_count >= total_results:
                     break
 
-                href = listing.get_attribute("href")
+                href = listing.get_attribute("href", timeout=90000)  # Increased timeout
                 if href in processed_urls:
                     continue
 
                 try:
                     listing.click()
-                    page.wait_for_timeout(3000)
+                    page.wait_for_timeout(7000)  # Increased timeout
 
                     studio = Studio()
 
@@ -189,14 +194,14 @@ def main(location, total_results):
                     processed_count += 1
 
                     page.go_back()
-                    page.wait_for_timeout(2000)
+                    page.wait_for_timeout(7000)  # Increased timeout
 
                 except Exception as e:
                     print(f"Error occurred: {e}")
 
                 if (i + 1) % batch_size == 0:
                     results_panel.evaluate("(element) => element.scrollTop += 1000;")
-                    page.wait_for_timeout(3000)
+                    page.wait_for_timeout(7000)  # Increased timeout
 
             new_listings = page.locator("//a[contains(@href, 'https://www.google.com/maps/place')]").all()
             if len(new_listings) == len(listings):
@@ -204,7 +209,7 @@ def main(location, total_results):
                 if more_places_button.count() > 0:
                     print("Clicking 'More places' button...")
                     more_places_button.click()
-                    page.wait_for_timeout(5000)
+                    page.wait_for_timeout(15000)  # Increased timeout
                 else:
                     print("No more results found.")
                     break
