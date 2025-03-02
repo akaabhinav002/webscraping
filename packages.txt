@@ -31,3 +31,4 @@ libegl1
 libglx0
 libgudev-1.0-0
 libgles2
+libxslt1.1
