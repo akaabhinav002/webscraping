@@ -5,6 +5,8 @@ import pandas as pd
 import os
 import re
 
+os.system("playwright install")
+
 @dataclass
 class Studio:
     """Holds studio data"""
