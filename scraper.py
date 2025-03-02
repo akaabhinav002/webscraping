@@ -139,16 +139,16 @@ def main(location, total_results):
         context = browser.new_context()
         page = context.new_page()
 
-        page.goto("https://www.google.com/maps", timeout=120000)  # Increased timeout
-        page.wait_for_load_state("networkidle", timeout=120000)  # Wait for network to be idle
+        page.goto("https://www.google.com/maps", timeout=30000)
+        page.wait_for_load_state("networkidle", timeout=30000)
         print("Page loaded successfully")
 
         page.locator('//input[@id="searchboxinput"]').fill(search_query)
         page.keyboard.press("Enter")
-        page.wait_for_timeout(15000)  # Increased timeout
+        page.wait_for_timeout(5000)
 
         # Wait for results to load
-        page.wait_for_selector("//div[contains(@aria-label, 'Results for')]", timeout=120000)  # Increased timeout
+        page.wait_for_selector("//div[contains(@aria-label, 'Results for')]", timeout=30000)
         print("Results loaded successfully")
 
         results_panel = page.locator("xpath=//div[contains(@aria-label, 'Results for')]")
@@ -156,22 +156,26 @@ def main(location, total_results):
         studio_list = StudioList()
         processed_urls = set()
         processed_count = 0
-        batch_size = 3
+        batch_size = 2  # Decrease batch size to scroll more frequently
+        scroll_increment = 1000  # Increment for scrolling
 
         while processed_count < total_results:
+            # Wait for listings to be present
+            page.wait_for_selector("//a[contains(@href, 'https://www.google.com/maps/place')]", timeout=30000)
             listings = page.locator("//a[contains(@href, 'https://www.google.com/maps/place')]").all()
 
             for i, listing in enumerate(listings):
                 if processed_count >= total_results:
                     break
 
-                href = listing.get_attribute("href", timeout=90000)  # Increased timeout
-                if href in processed_urls:
-                    continue
-
+                href = None
                 try:
+                    href = listing.get_attribute("href", timeout=30000)
+                    if href in processed_urls:
+                        continue
+
                     listing.click()
-                    page.wait_for_timeout(7000)  # Increased timeout
+                    page.wait_for_timeout(3000)
 
                     studio = Studio()
 
@@ -194,14 +198,16 @@ def main(location, total_results):
                     processed_count += 1
 
                     page.go_back()
-                    page.wait_for_timeout(7000)  # Increased timeout
+                    page.wait_for_timeout(3000)
 
                 except Exception as e:
                     print(f"Error occurred: {e}")
 
+                # Scroll after processing each batch of listings
                 if (i + 1) % batch_size == 0:
-                    results_panel.evaluate("(element) => element.scrollTop += 1000;")
-                    page.wait_for_timeout(7000)  # Increased timeout
+                    results_panel.evaluate(f"(element) => element.scrollTop += {scroll_increment};")
+                    page.wait_for_timeout(3000)
+                    page.wait_for_selector("//a[contains(@href, 'https://www.google.com/maps/place')]", timeout=30000)  # Ensure new listings are loaded
 
             new_listings = page.locator("//a[contains(@href, 'https://www.google.com/maps/place')]").all()
             if len(new_listings) == len(listings):
@@ -209,7 +215,7 @@ def main(location, total_results):
                 if more_places_button.count() > 0:
                     print("Clicking 'More places' button...")
                     more_places_button.click()
-                    page.wait_for_timeout(15000)  # Increased timeout
+                    page.wait_for_timeout(5000)
                 else:
                     print("No more results found.")
                     break
