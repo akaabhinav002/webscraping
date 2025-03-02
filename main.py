@@ -27,6 +27,8 @@ def run_scraping():
                         file_name=file_name,
                         mime="application/octet-stream"
                     )
+        else:
+            st.error("Output directory does not exist.")
     else:
         st.error("Please provide both location and total number of results.")
 
