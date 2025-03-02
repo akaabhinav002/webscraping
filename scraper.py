@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import re
 
+# Ensure Playwright browsers are installed
 os.system("playwright install")
 
 @dataclass
@@ -34,12 +35,14 @@ class StudioList:
         if not os.path.exists(self.save_at):
             os.makedirs(self.save_at)
         self.dataframe().to_excel(f"{self.save_at}/{filename}.xlsx", index=False)
+        print(f"Excel file created: {self.save_at}/{filename}.xlsx")
 
     def save_to_csv(self, filename):
         """Saves pandas DataFrame to a CSV file"""
         if not os.path.exists(self.save_at):
             os.makedirs(self.save_at)
         self.dataframe().to_csv(f"{self.save_at}/{filename}.csv", index=False, encoding="utf-8")
+        print(f"CSV file created: {self.save_at}/{filename}.csv")
 
 def clean_text(text):
     """Removes unwanted characters and fixes encoding issues"""
@@ -128,13 +131,14 @@ def extract_clients(page):
 
 def main(location, total_results):
     search_query = f"recording studios in {location}"
+    print("Starting scraping...")
+    print(f"Searching for: {search_query}")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
 
-        print(f"Searching for: {search_query}")
         page.goto("https://www.google.com/maps", timeout=60000)
         page.wait_for_timeout(5000)
 
@@ -190,15 +194,12 @@ def main(location, total_results):
                 except Exception as e:
                     print(f"Error occurred: {e}")
 
-                # Scroll after processing each batch of listings
                 if (i + 1) % batch_size == 0:
                     results_panel.evaluate("(element) => element.scrollTop += 1000;")
-                    page.wait_for_timeout(3000)  # Wait for new results to load
+                    page.wait_for_timeout(3000)
 
-            # Check if more results are loaded
             new_listings = page.locator("//a[contains(@href, 'https://www.google.com/maps/place')]").all()
             if len(new_listings) == len(listings):
-                # If no new results are loaded, try clicking "More places"
                 more_places_button = page.locator("//button[contains(text(), 'More places')]")
                 if more_places_button.count() > 0:
                     print("Clicking 'More places' button...")
