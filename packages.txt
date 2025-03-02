@@ -8,3 +8,5 @@ libpangocairo-1.0-0
 libasound2
 libxdamage1
 libxfixes3
+libxkbcommon0
+libcups2
